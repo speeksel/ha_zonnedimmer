@@ -1,0 +1,16 @@
+{
+  "name": "zonnedimmer-addon",
+  "version": "1.0.0",
+  "description": "Zonnedimmer automation add-on for Home Assistant",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "playwright": "^1.45.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

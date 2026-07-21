@@ -1,0 +1,56 @@
+---
+name: Zonnedimmer
+version: "1.1.0"
+slug: zonnedimmer
+description: >-
+  Automatiseer Zonnedimmer via Playwright (Chromium).
+  Biedt een intern REST-endpoint voor Home Assistant rest_command.
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+init: false
+timeout: 60
+
+# Persistente opslag: de /data map overleeft herstarts van Home Assistant.
+map:
+  - config:ro
+  - ssl:ro
+  - data:rw
+
+# Interne REST-poort; alleen binnen HA netwerk bereikbaar.
+ports:
+  8099/tcp: null
+
+# Optioneel: Ingress voor eerste handmatige login.
+ingress: true
+ingress_port: 8099
+ingress_entry: ingress
+
+# Docker opties
+host_network: false
+host_dbus: false
+privileged:
+  - SYS_ADMIN
+apparmor: false
+
+# Add-on configuratie opties met schema voor veilige validatie.
+options:
+  zonnedimmer_url: "https://app.zonnedimmer.nl"
+  headless: true
+  cooldown_minutes: 5
+  browser_timeout_ms: 60000
+  log_level: "info"
+  login_check_interval_minutes: 60
+  username: ""
+  password: ""
+schema:
+  zonnedimmer_url: "url"
+  headless: bool
+  cooldown_minutes: int(1,120)
+  browser_timeout_ms: int(10000,120000)
+  log_level: list(debug|info|warning|error)
+  login_check_interval_minutes: int(5,1440)
+  username: str?
+  password: password?

@@ -1,0 +1,12 @@
+---
+build_from:
+  amd64: ghcr.io/home-assistant/amd64-base:3.19
+  aarch64: ghcr.io/home-assistant/aarch64-base:3.19
+squash: false
+labels:
+  io.hass.type: addon
+  io.hass.arch: amd64,aarch64
+  io.hass.stage: stable
+args:
+  NODE_VERSION: "20"
+  PLAYWRIGHT_BROWSERS_PATH: "/ms-playwright"

@@ -1,0 +1,146 @@
+# ─────────────────────────────────────────────────────────────
+# Home Assistant configuratie voor Zonnedimmer add-on
+# Plaats relevante delen in configuration.yaml / scripts.yaml / automations.yaml
+# ─────────────────────────────────────────────────────────────
+
+# ─── rest_command ───────────────────────────────────────────
+# Roept het interne REST-endpoint van de add-on aan.
+# Gebruik de add-on slug als hostname (niet localhost).
+# duration: 1, 2, 4 of 8 uur.
+rest_command:
+  zonnedimmer_uit:
+    url: "http://zonnedimmer:8099/turn-off"
+    method: POST
+    content_type: "application/json"
+    payload: '{"duration": {{ duration | default(2) }}}'
+    timeout: 60
+
+  zonnedimmer_check_status:
+    url: "http://zonnedimmer:8099/status"
+    method: GET
+    timeout: 10
+
+# ─── Helpers (input_text + input_datetime) ──────────────────
+input_text:
+  zonnedimmer_last_action:
+    name: Zonnedimmer Laatste Actie
+    initial: ""
+    icon: mdi:clock-outline
+
+input_datetime:
+  zonnedimmer_last_action_time:
+    name: Zonnedimmer Laatste Actie Tijd
+    has_date: true
+    has_time: true
+
+# ─── Template sensor: Zonnedimmer status ────────────────────
+template:
+  - sensor:
+      - name: "Zonnedimmer Laatste Actie"
+        state: "{{ states('input_datetime.zonnedimmer_last_action_time') }}"
+        icon: mdi:solar-power
+        attributes:
+          last_action_text: "{{ states('input_text.zonnedimmer_last_action') }}"
+
+# ─── REST sensor: live add-on status ────────────────────────
+sensor:
+  - platform: rest
+    name: "Zonnedimmer Add-on Status"
+    resource: "http://zonnedimmer:8099/status"
+    method: GET
+    scan_interval: 300
+    json_attributes:
+      - loginRequired
+      - lastActionResult
+      - cooldownRemainingSeconds
+      - busy
+    value_template: "{{ value_json.status }}"
+
+# ─── Script: actie uitvoeren ────────────────────────────────
+# duration: 1, 2, 4 of 8 uur.
+script:
+  zonnedimmer_uitschakelen:
+    alias: "Zonnedimmer uitzetten"
+    icon: mdi:power-plug-off
+    mode: single
+    fields:
+      duration:
+        description: "Aantal uren uitzetten (1, 2, 4 of 8)"
+        example: 2
+        default: 2
+        selector:
+          number:
+            min: 1
+            max: 8
+            step: 1
+            mode: box
+    sequence:
+      - service: rest_command.zonnedimmer_uit
+        data:
+          duration: "{{ duration | default(2) }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.zonnedimmer_last_action
+        data:
+          value: "{{ duration | default(2) }} uur uitzetten - {{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.zonnedimmer_last_action_time
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+# ─── Automatisering: melding bij herinloggen ────────────────
+automation:
+  - alias: "Zonnedimmer - Herinloggen nodig"
+    trigger:
+      - platform: state
+        entity_id: sensor.zonnedimmer_add_on_status
+        attribute: loginRequired
+        to: true
+    action:
+      - service: notify.notify
+        data:
+          title: "Zonnedimmer - Actie vereist"
+          message: "De Zonnedimmer sessie is verlopen. Log opnieuw in via de add-on Ingress-pagina."
+          data:
+            tag: zonnedimmer_relogin
+    mode: single
+
+  - alias: "Zonnedimmer - Automatisch uitschakelen bij lage batterij"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.home_battery_level
+        below: 10
+        for:
+          minutes: 5
+    condition:
+      - condition: state
+        entity_id: sensor.zonnedimmer_add_on_status
+        state: ok
+    action:
+      - service: script.zonnedimmer_uitschakelen
+        data:
+          duration: 2
+    mode: single
+
+# ─── Lovelace dashboard kaart ───────────────────────────────
+# Voeg toe aan je dashboard YAML:
+#
+# type: vertical-stack
+# cards:
+#   - type: button
+#     name: Zonnedimmer 2 uur uit
+#     icon: mdi:power-plug-off
+#     tap_action:
+#       action: call-service
+#       service: script.zonnedimmer_uitschakelen
+#       data:
+#         duration: 2
+#       confirmation:
+#         text: "Zonnedimmer 2 uur uitzetten?"
+#   - type: entities
+#     title: Zonnedimmer Status
+#     entities:
+#       - sensor.zonnedimmer_add_on_status
+#       - input_datetime.zonnedimmer_last_action_time
+#       - input_text.zonnedimmer_last_action
