@@ -1,0 +1,17 @@
+turn_off:
+  name: Zonnedimmer uitzetten
+  description: Zet Zonnedimmer uit voor het opgegeven aantal uren (1, 2, 4 of 8).
+  fields:
+    duration:
+      name: Duur
+      description: Aantal uren dat de zonnepanelen worden uitgeschakeld.
+      required: true
+      example: 2
+      selector:
+        select:
+          options:
+            - "1"
+            - "2"
+            - "4"
+            - "8"
+          mode: dropdown

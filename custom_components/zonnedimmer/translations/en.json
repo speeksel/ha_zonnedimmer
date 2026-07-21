@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Zonnedimmer",
+        "description": "Enter your Zonnedimmer credentials to connect the integration.",
+        "data": {
+          "base_url": "URL",
+          "username": "E-mail address",
+          "password": "Password",
+          "cooldown": "Cooldown (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to Zonnedimmer.",
+      "invalid_auth": "Invalid e-mail address or password."
+    },
+    "abort": {
+      "already_configured": "This Zonnedimmer account is already configured."
+    }
+  },
+  "services": {
+    "turn_off": {
+      "name": "Turn off",
+      "description": "Turn off Zonnedimmer for the given number of hours."
+    }
+  },
+  "entity": {
+    "button": {
+      "turn_off_1": { "name": "Turn off for 1 hour" },
+      "turn_off_2": { "name": "Turn off for 2 hours" },
+      "turn_off_4": { "name": "Turn off for 4 hours" },
+      "turn_off_8": { "name": "Turn off for 8 hours" }
+    },
+    "sensor": {
+      "last_action": { "name": "Last action" },
+      "cooldown": { "name": "Cooldown remaining" },
+      "login_status": { "name": "Login status" }
+    },
+    "binary_sensor": {
+      "login_required": { "name": "Login required" }
+    }
+  }
+}

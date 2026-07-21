@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Zonnedimmer",
+        "description": "Voer je Zonnedimmer inloggegevens in om de integration te koppelen.",
+        "data": {
+          "base_url": "URL",
+          "username": "E-mailadres",
+          "password": "Wachtwoord",
+          "cooldown": "Cooldown (seconden)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met Zonnedimmer.",
+      "invalid_auth": "Ongeldig e-mailadres of wachtwoord."
+    },
+    "abort": {
+      "already_configured": "Deze Zonnedimmer-account is al geconfigureerd."
+    }
+  },
+  "services": {
+    "turn_off": {
+      "name": "Uitzetten",
+      "description": "Zet Zonnedimmer uit voor het opgegeven aantal uren."
+    }
+  },
+  "entity": {
+    "button": {
+      "turn_off_1": { "name": "Uitzetten voor 1 uur" },
+      "turn_off_2": { "name": "Uitzetten voor 2 uur" },
+      "turn_off_4": { "name": "Uitzetten voor 4 uur" },
+      "turn_off_8": { "name": "Uitzetten voor 8 uur" }
+    },
+    "sensor": {
+      "last_action": { "name": "Laatste actie" },
+      "cooldown": { "name": "Cooldown resterend" },
+      "login_status": { "name": "Inlogstatus" }
+    },
+    "binary_sensor": {
+      "login_required": { "name": "Herinloggen vereist" }
+    }
+  }
+}

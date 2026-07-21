@@ -1,175 +1,85 @@
-# Zonnedimmer Home Assistant Add-on
+# Zonnedimmer Home Assistant Integration
 
-Automatiseer **Zonnedimmer** binnen Home Assistant met behulp van Playwright (Chromium) browserautomatisering.
+Een native Home Assistant integratie voor **[Zonnedimmer](https://zonnedimmer.nl)**.
+Geen `rest_command`, `script` of helpers meer handmatig configureren — de integratie
+maakt zelf de entiteiten aan.
 
 ## Functies
 
-- Volledig installeerbaar als Home Assistant add-on (lokale repository)
-- Werkt op `amd64` en `aarch64`
-- Playwright met Chromium voor betrouwbare browserautomatisering
-- Kiesbare duur: zet Zonnedimmer uit voor **1, 2, 4 of 8 uur** via de instellingenpagina-knoppen
-- Accepteert de `confirm()`-bevestigingsdialoog automatisch en controleert de HTTP-respons van de form submission
-- Persistente opslag van cookies en sessies in `/data/browser-profile`
-- Automatisch starten na herstart van Home Assistant (`boot: auto`, `startup: application`)
-- REST-endpoint voor integratie met `rest_command`
-- Mutex/lock ter voorkoming van gelijktijdige browserprocessen
-- Cooldown van minimaal 5 minuten tussen acties
-- Ingress-pagina voor status, handmatige login en knoppen voor 1/2/4/8 uur
-- Veilige afhandeling van referenties via add-on configuratie (password type)
-- Periodieke login-controle met melding wanneer herinloggen nodig is
+- Setup via **Config Flow** (Instellingen → Apparaten & Diensten → Integratie toevoegen)
+- Vier **knoppen**: zet uit voor 1, 2, 4 of 8 uur
+- **Sensoren**: laatste actie, resterende cooldown, inlogstatus
+- **Binaire sensor**: herinloggen vereist
+- **Service** `zonnedimmer.turn_off` met `duration` (1/2/4/8) voor automatiseringen
+- Werkt volledig via HTTP (geen Chromium/Playwright), licht en snel
 
 ## Installatie
 
-1. Plaats de bestanden in een git-repository (bijv. GitHub).
-2. Ga in Home Assistant naar **Instellingen → Add-ons → Add-on Store → ⋮ → Repositories**.
-3. Voeg de URL van je repository toe en klik **Toevoegen**.
-4. De add-on **Zonnedimmer** verschijnt in de add-on store. Klik **Installeren**.
-5. Configureer de add-on (zie hieronder).
-6. Start de add-on.
+### Optie A — HACS
+
+1. Voeg deze repository toe in HACS als **Integration** (Custom repositories).
+2. Installeer **Zonnedimmer**.
+3. Herstart Home Assistant.
+
+### Optie B — Handmatig
+
+1. Kopieer de map `custom_components/zonnedimmer/` naar je
+   `custom_components/zonnedimmer/` op je Home Assistant installatie.
+2. Herstart Home Assistant.
 
 ## Configuratie
 
-Open de add-on configuratie in Home Assistant:
+1. Ga naar **Instellingen → Apparaten & Diensten → Integratie toevoegen**.
+2. Zoek **Zonnedimmer**.
+3. Vul in:
+   - URL (standaard `https://app.zonnedimmer.nl`)
+   - E-mailadres
+   - Wachtwoord
+   - Cooldown in seconden (standaard 300)
+4. De integratie test de inloggegevens en maakt het apparaaat met entiteiten aan.
 
-| Optie | Standaard | Beschrijving |
-|-------|-----------|--------------|
-| `zonnedimmer_url` | `https://app.zonnedimmer.nl` | URL van de Zonnedimmer webapp |
-| `headless` | `true` | Browser headless uitvoeren (`false` voor debugging) |
-| `cooldown_minutes` | `5` | Minimum tijd tussen twee acties |
-| `browser_timeout_ms` | `60000` | Time-out voor browseracties in milliseconden |
-| `log_level` | `info` | Logniveau: `debug`, `info`, `warning`, `error` |
-| `login_check_interval_minutes` | `60` | Interval voor periodieke login-controle |
-| `username` | _(leeg)_ | Optioneel: gebruikersnaam voor automatische login |
-| `password` | _(leeg)_ | Optioneel: wachtwoord voor automatische login (wordt veilig opgeslagen) |
+## Entiteiten
 
-### Eerste login
+Na installatie verschijnt er één apparaat **Zonnedimmer** met:
 
-1. Vul `username` en `password` in de add-on configuratie, **of**
-2. Open de **Ingress**-pagina van de add-on en klik op **Inloggen**.
-3. Na succesvolle login wordt de sessie persistent opgeslagen in `/data/browser-profile`.
-4. Daaropvolgende acties worden headless uitgevoerd.
+| Entiteit | Type | Beschrijving |
+|----------|------|--------------|
+| `button.zonnedimmer_uitzetten_voor_1_uur` | Knop | Zet uit voor 1 uur |
+| `button.zonnedimmer_uitzetten_voor_2_uur` | Knop | Zet uit voor 2 uur |
+| `button.zonnedimmer_uitzetten_voor_4_uur` | Knop | Zet uit voor 4 uur |
+| `button.zonnedimmer_uitzetten_voor_8_uur` | Knop | Zet uit voor 8 uur |
+| `sensor.zonnedimmer_laatste_actie` | Sensor | Tijdstip van laatste dim-actie |
+| `sensor.zonnedimmer_cooldown_resterend` | Sensor | Resterende cooldown (s) |
+| `sensor.zonnedimmer_inlogstatus` | Sensor | ingelogd / uitgelogd |
+| `binary_sensor.zonnedimmer_herinloggen_vereist` | Binaire sensor | Aan als sessie verlopen is |
 
-## REST API
-
-### `POST /turn-off`
-
-Schakelt Zonnedimmer uit voor het opgegeven aantal uren. Toegestane waarden: `1`, `2`, `4` of `8` uur.
-
-**Verzoek (JSON body):**
-```json
-{ "duration": 2 }
-```
-
-Of via query string: `POST /turn-off?duration=2`.
-
-**Respons (succes):**
-```json
-{
-  "success": true,
-  "status": "completed",
-  "durationHours": 2,
-  "message": "Zonnedimmer uitgeschakeld voor 2 uur (knop: \"2 uur uitzetten\").",
-  "timestamp": "2026-01-15T12:00:00.000Z"
-}
-```
-
-**Respons (ongeldige duur):**
-```json
-{
-  "success": false,
-  "status": "invalid_duration",
-  "error": "Ongeldige duur. Toegestaan: 1, 2, 4, 8 uur.",
-  "allowedDurations": [1, 2, 4, 8],
-  "timestamp": "2026-01-15T12:00:00.000Z"
-}
-```
-
-**Respons (cooldown):**
-```json
-{
-  "success": false,
-  "status": "cooldown",
-  "error": "Cooldown actief. Probeer opnieuw over 283 seconden.",
-  "cooldownRemainingSeconds": 283,
-  "timestamp": "2026-01-15T12:00:00.000Z"
-}
-```
-
-**Respons (login vereist):**
-```json
-{
-  "success": false,
-  "status": "login_required",
-  "error": "Sessie verlopen en geen referenties opgegeven. Log handmatig in via de Ingress-pagina.",
-  "timestamp": "2026-01-15T12:00:00.000Z"
-}
-```
-
-### Voorbeeld (curl)
-
-```bash
-curl -X POST http://zonnedimmer:8099/turn-off \
-  -H "Content-Type: application/json" \
-  -d '{"duration": 4}'
-```
-
-Of via query string:
-
-```bash
-curl -X POST "http://zonnedimmer:8099/turn-off?duration=4"
-```
-
-### `GET /status`
-
-Geeft de huidige status van de add-on.
-
-### `GET /health`
-Health check endpoint.
-
-### `POST /login`
-
-Handmatige login (gebruikt door Ingress-pagina).
-
-## Home Assistant integratie
-
-Minimale `rest_command` met kiesbare duur (voeg toe aan `configuration.yaml`):
+## Automatisering (voorbeeld)
 
 ```yaml
-rest_command:
-  zonnedimmer_uit:
-    url: "http://zonnedimmer:8099/turn-off"
-    method: POST
-    content_type: "application/json"
-    payload: '{"duration": {{ duration | default(2) }}}'
-    timeout: 60
+- alias: "Zonnedimmer automatisch uitzetten"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.home_battery_level
+      below: 10
+  action:
+    - action: zonnedimmer.turn_off
+      data:
+        duration: 2
 ```
 
-Aanroep vanuit een script of automatisering:
+Of roep direct een knop aan:
 
 ```yaml
-service: rest_command.zonnedimmer_uit
-data:
-  duration: 4   # 1, 2, 4 of 8
+- action: button.press
+  target:
+    entity_id: button.zonnedimmer_uitzetten_voor_4_uur
 ```
 
-> Vervang `zonnedimmer` door de daadwerkelijke add-on slug indien anders.
+## Add-on (verouderd)
 
-Zie `DOCS.md` voor volledige voorbeelden van scripts, automatiseringen, dashboardknoppen, sensoren en meldingen.
-
-## Architectuur
-
-```
-Home Assistant
-  └─ rest_command → POST http://<addon-slug>:8099/turn-off
-       └─ Express webservice (Node.js)
-            └─ Playwright (Chromium)
-                 └─ Persistent profile: /data/browser-profile
-```
-
-## Ondersteunde architecturen
-
-- `amd64`
-- `aarch64`
+De eerdere Home Assistant add-on (`zonnedimmer/`) gebruikt Playwright/Chromium en
+vereist handmatige `rest_command`-configuratie. De integratie in deze map vervangt
+die voor nieuwe installaties.
 
 ## Licentie
 

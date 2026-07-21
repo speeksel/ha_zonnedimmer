@@ -1,0 +1,10 @@
+{
+  "domain": "zonnedimmer",
+  "name": "Zonnedimmer",
+  "codeowners": ["@brianlesker"],
+  "config_flow": true,
+  "documentation": "https://github.com/your-username/zonnedimmer_addon",
+  "issue_tracker": "https://github.com/your-username/zonnedimmer_addon/issues",
+  "iot_class": "cloud_polling",
+  "version": "1.0.0"
+}
