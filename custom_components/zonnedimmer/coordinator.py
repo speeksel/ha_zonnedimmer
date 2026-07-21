@@ -36,17 +36,23 @@ class ZonnedimmerCoordinator(DataUpdateCoordinator):
         self.last_action_at: datetime | None = None
 
     async def _async_update_data(self) -> dict:
+        """Controleer sessie; log opnieuw in wanneer nodig."""
         try:
             authenticated = await self.api.async_check_auth()
         except ZonnedimmerAuthError:
-            # Probeer één keer herinloggen
+            authenticated = False
+        except ZonnedimmerError as err:
+            raise UpdateFailed(str(err)) from err
+
+        if not authenticated:
+            _LOGGER.warning("Zonnedimmer sessie niet actief, probeer in te loggen")
             try:
                 await self.api.async_login()
                 authenticated = True
+            except ZonnedimmerAuthError as err:
+                raise UpdateFailed(f"Inloggen mislukt (ongeldige credentials): {err}") from err
             except ZonnedimmerError as err:
                 raise UpdateFailed(f"Herinloggen mislukt: {err}") from err
-        except ZonnedimmerError as err:
-            raise UpdateFailed(str(err)) from err
 
         return {"authenticated": authenticated}
 

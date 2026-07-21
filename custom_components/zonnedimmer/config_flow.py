@@ -103,14 +103,15 @@ class ZonnedimmerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(
         config_entry: ConfigEntry,
     ) -> "ZonnedimmerOptionsFlow":
-        return ZonnedimmerOptionsFlow(config_entry)
+        return ZonnedimmerOptionsFlow()
 
 
 class ZonnedimmerOptionsFlow(config_entries.OptionsFlow):
-    """Opties-flow om inloggegevens te wijzigen via de Configureer-knop."""
+    """Opties-flow om inloggegevens te wijzigen via de Configureer-knop.
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        self.config_entry = config_entry
+    `config_entry` wordt automatisch ingesteld door de OptionsFlow-baseclass
+    (read-only property); geen __init__ override nodig.
+    """
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
