@@ -10,6 +10,16 @@
           "password": "Password",
           "cooldown": "Cooldown (seconds)"
         }
+      },
+      "init": {
+        "title": "Zonnedimmer settings",
+        "description": "Update your credentials or cooldown. The integration reloads automatically after saving.",
+        "data": {
+          "base_url": "URL",
+          "username": "E-mail address",
+          "password": "Password",
+          "cooldown": "Cooldown (seconds)"
+        }
       }
     },
     "error": {

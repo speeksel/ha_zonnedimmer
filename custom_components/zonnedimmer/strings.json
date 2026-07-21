@@ -10,6 +10,16 @@
           "password": "Wachtwoord",
           "cooldown": "Cooldown (seconden)"
         }
+      },
+      "init": {
+        "title": "Zonnedimmer instellingen",
+        "description": "Pas je inloggegevens of cooldown aan. De integratie herlaadt automatisch na opslaan.",
+        "data": {
+          "base_url": "URL",
+          "username": "E-mailadres",
+          "password": "Wachtwoord",
+          "cooldown": "Cooldown (seconden)"
+        }
       }
     },
     "error": {
