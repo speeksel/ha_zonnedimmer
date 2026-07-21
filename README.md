@@ -1,8 +1,10 @@
 # Zonnedimmer Home Assistant Integration
 
-Een native Home Assistant integratie voor **[Zonnedimmer](https://zonnedimmer.nl)**.
-Geen `rest_command`, `script` of helpers meer handmatig configureren — de integratie
-maakt zelf de entiteiten aan.
+Een native Home Assistant integratie voor **[Zonnedimmer](https://zonnedimmer.nl)** —
+de dienst die je zonnepanelen automatisch dimt bij negatieve stroomprijzen of
+netcongestie. Met deze integratie bedien je Zonnedimmer rechtstreeks vanuit
+Home Assistant: knoppen om uit te zetten voor 1, 2, 4 of 8 uur, sensoren voor
+status en inlogcontrole, en een service voor automatiseringen.
 
 ## Functies
 
@@ -11,7 +13,10 @@ maakt zelf de entiteiten aan.
 - **Sensoren**: laatste actie, resterende cooldown, inlogstatus
 - **Binaire sensor**: herinloggen vereist
 - **Service** `zonnedimmer.turn_off` met `duration` (1/2/4/8) voor automatiseringen
-- Werkt volledig via HTTP (geen Chromium/Playwright), licht en snel
+- Werkt volledig via HTTP — licht en snel, geen browser-automatisering nodig
+- **Cooldown** wordt afgedwongen bij knoppen én service (standaard 300s)
+- Automatisch herinloggen bij een verlopen sessie
+- Eigen merk-icoon in de integratie-lijst
 
 ## Installatie
 
@@ -36,7 +41,9 @@ maakt zelf de entiteiten aan.
    - E-mailadres
    - Wachtwoord
    - Cooldown in seconden (standaard 300)
-4. De integratie test de inloggegevens en maakt het apparaaat met entiteiten aan.
+4. De integratie test de inloggegevens en maakt het apparaat met entiteiten aan.
+
+Inloggegevens zijn achteraf aan te passen via **Configureren** op de integratiekaart.
 
 ## Entiteiten
 
@@ -55,8 +62,10 @@ Na installatie verschijnt er één apparaat **Zonnedimmer** met:
 
 ## Automatisering (voorbeeld)
 
+Zet Zonnedimmer uit voor 2 uur zodra de thuisbatterij onder 10% zakt:
+
 ```yaml
-- alias: "Zonnedimmer automatisch uitzetten"
+- alias: "Zonnedimmer automatisch uitzetten bij lage batterij"
   trigger:
     - platform: numeric_state
       entity_id: sensor.home_battery_level
@@ -75,11 +84,26 @@ Of roep direct een knop aan:
     entity_id: button.zonnedimmer_uitzetten_voor_4_uur
 ```
 
-## Add-on (verouderd)
+## Foutoplossing
 
-De eerdere Home Assistant add-on (`zonnedimmer/`) gebruikt Playwright/Chromium en
-vereist handmatige `rest_command`-configuratie. De integratie in deze map vervangt
-die voor nieuwe installaties.
+- **Geen velden bij toevoegen** → herstart Home Assistant volledig (een herlaad
+  van de integratie is niet genoeg; de config flow registreert pas bij een
+  server-herstart).
+- **"Ongeldig e-mailadres of wachtwoord"** → controleer de inloggegevens in de
+  Zonnedimmer webapp. Wijzig ze via **Configureren** op de integratiekaart.
+- **Entiteiten blijven onbeschikbaar** → kijk in **Instellingen → Logs**
+  (filter op `zonnedimmer`); schakel debug in via `logger:` indien nodig:
+  ```yaml
+  logger:
+    logs:
+      custom_components.zonnedimmer: debug
+  ```
+- **Icoon niet zichtbaar** → doe een hard refresh in je browser
+  (`Cmd`/`Ctrl + Shift + R`) na een herstart van Home Assistant.
+
+## Ondersteuning
+
+Problemen of ideeën? Open een issue in deze repository.
 
 ## Licentie
 

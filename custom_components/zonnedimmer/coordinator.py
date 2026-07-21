@@ -16,6 +16,16 @@ from .const import DOMAIN, UPDATE_INTERVAL_SECONDS
 _LOGGER = logging.getLogger(__name__)
 
 
+class ZonnedimmerCooldownActive(Exception):
+    """Afgedwongen cooldown: wacht alvorens een nieuwe dim-actie."""
+
+    def __init__(self, remaining_seconds: int) -> None:
+        self.remaining_seconds = remaining_seconds
+        super().__init__(
+            f"Cooldown actief. Probeer opnieuw over {remaining_seconds} seconden."
+        )
+
+
 class ZonnedimmerCoordinator(DataUpdateCoordinator):
     """Coördineert statuspolls en houdt lokaal laatste-actie/cooldown bij."""
 
@@ -66,3 +76,9 @@ class ZonnedimmerCoordinator(DataUpdateCoordinator):
             return 0
         elapsed = (datetime.utcnow() - self.last_action_at).total_seconds()
         return max(0, int(self.cooldown_seconds - elapsed))
+
+    def ensure_not_cooling_down(self) -> None:
+        """Gooi ZonnedimmerCooldownActive als de cooldown nog loopt."""
+        remaining = self.cooldown_remaining()
+        if remaining > 0:
+            raise ZonnedimmerCooldownActive(remaining)

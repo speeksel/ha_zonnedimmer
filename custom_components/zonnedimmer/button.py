@@ -9,11 +9,12 @@ from homeassistant.components.button import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import ZonnedimmerError
 from .const import ALLOWED_DURATIONS, DOMAIN
-from .coordinator import ZonnedimmerCoordinator
+from .coordinator import ZonnedimmerCooldownActive, ZonnedimmerCoordinator
 from .entity import ZonnedimmerEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,9 +57,17 @@ class ZonnedimmerTurnOffButton(ZonnedimmerEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Dim Zonnedimmer voor dit aantal uren."""
         try:
+            self.coordinator.ensure_not_cooling_down()
             await self._api.async_turn_off(self._duration)
             self.coordinator.record_action()
             await self.coordinator.async_request_refresh()
+        except ZonnedimmerCooldownActive as err:
+            _LOGGER.warning(
+                "Knop %d uur: %s", self._duration, err
+            )
+            raise HomeAssistantError(
+                f"Cooldown actief. Probeer opnieuw over {err.remaining_seconds} seconden."
+            ) from err
         except ZonnedimmerError as err:
             _LOGGER.error("Dimmen voor %d uur mislukt: %s", self._duration, err)
-            raise
+            raise HomeAssistantError(str(err)) from err

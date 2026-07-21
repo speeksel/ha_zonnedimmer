@@ -6,7 +6,7 @@ import logging
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryNotReady, ServiceValidationError
 
 from .api import USER_AGENT, ZonnedimmerAPI, ZonnedimmerError
 from .const import (
@@ -20,7 +20,7 @@ from .const import (
     SERVICE_TURN_OFF,
     ATTR_DURATION,
 )
-from .coordinator import ZonnedimmerCoordinator
+from .coordinator import ZonnedimmerCooldownActive, ZonnedimmerCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -82,24 +82,29 @@ def _register_services(hass: HomeAssistant) -> None:
         try:
             duration = int(duration)
         except (TypeError, ValueError):
-            _LOGGER.error("Ongeldige duur: %s", duration)
-            return
+            raise ServiceValidationError(f"Ongeldige duur: {duration}")
         if duration not in ALLOWED_DURATIONS:
-            _LOGGER.error(
-                "Ongeldige duur %s. Toegestaan: %s", duration, ALLOWED_DURATIONS
+            raise ServiceValidationError(
+                f"Ongeldige duur {duration}. Toegestaan: {ALLOWED_DURATIONS}"
             )
-            return
 
         entries = hass.data.get(DOMAIN, {})
+        if not entries:
+            raise ServiceValidationError("Zonnedimmer is niet geconfigureerd")
         for data in entries.values():
             api: ZonnedimmerAPI = data["api"]
             coordinator: ZonnedimmerCoordinator = data["coordinator"]
             try:
+                coordinator.ensure_not_cooling_down()
                 await api.async_turn_off(duration)
                 coordinator.record_action()
                 await coordinator.async_request_refresh()
+            except ZonnedimmerCooldownActive as err:
+                raise ServiceValidationError(
+                    f"Cooldown actief. Probeer opnieuw over {err.remaining_seconds} seconden."
+                ) from err
             except ZonnedimmerError as err:
-                _LOGGER.error("Dimmen mislukt: %s", err)
+                raise ServiceValidationError(str(err)) from err
 
     if not hass.services.has_service(DOMAIN, SERVICE_TURN_OFF):
         hass.services.async_register(DOMAIN, SERVICE_TURN_OFF, handle_turn_off)
