@@ -105,9 +105,19 @@ Of via query string: `POST /turn-off?duration=2`.
 }
 ```
 
-### `POST /turn-off-for-two-hours` (verouderd)
+### Voorbeeld (curl)
 
-Bestaande alias die equivalent is aan `POST /turn-off` met `duration=2`. Blijft werken voor eerdere `rest_command`-configuraties.
+```bash
+curl -X POST http://zonnedimmer:8099/turn-off \
+  -H "Content-Type: application/json" \
+  -d '{"duration": 4}'
+```
+
+Of via query string:
+
+```bash
+curl -X POST "http://zonnedimmer:8099/turn-off?duration=4"
+```
 
 ### `GET /status`
 
