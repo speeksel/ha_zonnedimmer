@@ -7,12 +7,14 @@ Automatiseer **Zonnedimmer** binnen Home Assistant met behulp van Playwright (Ch
 - Volledig installeerbaar als Home Assistant add-on (lokale repository)
 - Werkt op `amd64` en `aarch64`
 - Playwright met Chromium voor betrouwbare browserautomatisering
+- Kiesbare duur: zet Zonnedimmer uit voor **1, 2, 4 of 8 uur** via de instellingenpagina-knoppen
+- Accepteert de `confirm()`-bevestigingsdialoog automatisch en controleert de HTTP-respons van de form submission
 - Persistente opslag van cookies en sessies in `/data/browser-profile`
 - Automatisch starten na herstart van Home Assistant (`boot: auto`, `startup: application`)
 - REST-endpoint voor integratie met `rest_command`
 - Mutex/lock ter voorkoming van gelijktijdige browserprocessen
 - Cooldown van minimaal 5 minuten tussen acties
-- Ingress-pagina voor status en handmatige login
+- Ingress-pagina voor status, handmatige login en knoppen voor 1/2/4/8 uur
 - Veilige afhandeling van referenties via add-on configuratie (password type)
 - Periodieke login-controle met melding wanneer herinloggen nodig is
 
@@ -120,9 +122,31 @@ Handmatige login (gebruikt door Ingress-pagina).
 
 ## Home Assistant integratie
 
-Zie `DOCS.md` voor volledige voorbeelden van `rest_command`, scripts, automatiseringen, dashboardknoppen, sensoren en meldingen.
+Minimale `rest_command` met kiesbare duur (voeg toe aan `configuration.yaml`):
 
-## Architektuur
+```yaml
+rest_command:
+  zonnedimmer_uit:
+    url: "http://zonnedimmer:8099/turn-off"
+    method: POST
+    content_type: "application/json"
+    payload: '{"duration": {{ duration | default(2) }}}'
+    timeout: 60
+```
+
+Aanroep vanuit een script of automatisering:
+
+```yaml
+service: rest_command.zonnedimmer_uit
+data:
+  duration: 4   # 1, 2, 4 of 8
+```
+
+> Vervang `zonnedimmer` door de daadwerkelijke add-on slug indien anders.
+
+Zie `DOCS.md` voor volledige voorbeelden van scripts, automatiseringen, dashboardknoppen, sensoren en meldingen.
+
+## Architectuur
 
 ```
 Home Assistant
