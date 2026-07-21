@@ -1,6 +1,8 @@
 """Zonnedimmer sensoren: laatste actie en cooldown."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -56,7 +58,8 @@ class ZonnedimmerSensor(ZonnedimmerEntity, SensorEntity):
         if self.entity_description.key == "last_action":
             if self.coordinator.last_action_at is None:
                 return None
-            return self.coordinator.last_action_at.replace(tzinfo=None).isoformat()
+            # TIMESTAMP-sensoren vereisen een timezone-aware datetime.
+            return self.coordinator.last_action_at.replace(tzinfo=timezone.utc)
         if self.entity_description.key == "cooldown":
             return self.coordinator.cooldown_remaining()
         if self.entity_description.key == "login_status":
