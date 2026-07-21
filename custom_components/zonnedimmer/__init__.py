@@ -26,9 +26,12 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["button", "sensor", "binary_sensor"]
 
+_LOGGER.warning("Zonnedimmer integration module geladen")
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Zonnedimmer from a config entry."""
+    _LOGGER.warning("Zonnedimmer integration wordt geladen (setup_entry)")
     base_url = entry.data[CONF_BASE_URL]
     username = entry.data[CONF_USERNAME]
     password = entry.data[CONF_PASSWORD]

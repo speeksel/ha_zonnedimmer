@@ -1,6 +1,7 @@
 """Config flow for Zonnedimmer."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import aiohttp
@@ -20,6 +21,8 @@ from .const import (
     DEFAULT_COOLDOWN,
     DOMAIN,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _credential_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
@@ -68,6 +71,10 @@ class ZonnedimmerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             username = user_input[CONF_USERNAME]
+            _LOGGER.warning(
+                "Zonnedimmer config flow: probeer login voor %s @ %s",
+                username, user_input.get(CONF_BASE_URL),
+            )
             await self.async_set_unique_id(username.lower())
             self._abort_if_unique_id_configured()
 

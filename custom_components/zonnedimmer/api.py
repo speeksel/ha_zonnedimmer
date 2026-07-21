@@ -7,6 +7,7 @@ De flow is:
   3. GET /dashboard/settings -> verse CSRF-token + controle user-authenticated
   4. POST /dashboard/manual-power-control (form: _token, duration) -> dimmen
 
+Laravel's CSRF-middleware vereist een Referer/Origin-header bij POST-verzoeken.
 Geen browser/Playwright nodig: volledig HTTP met aiohttp.
 """
 from __future__ import annotations
@@ -30,7 +31,7 @@ _LOGGER = logging.getLogger(__name__)
 # Een realistische browser User-Agent voorkomt dat Cloudflare/bot-detectie de
 # simpele HTTP-requests blokkeert.
 USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
 
@@ -81,6 +82,14 @@ class ZonnedimmerAPI:
     def _on_login_page(final_url: str) -> bool:
         return "/login" in final_url
 
+    def _headers(self, referer_path: str | None = None) -> dict[str, str]:
+        """Bouw request-headers met Referer/Origin voor Laravel-CSRF."""
+        headers: dict[str, str] = {}
+        if referer_path:
+            headers["Referer"] = self._url(referer_path)
+            headers["Origin"] = self._base
+        return headers
+
     # ── Authenticatie ─────────────────────────────────────────
     async def async_login(self) -> bool:
         """Log in met e-mail/wachtwoord en authenticeer de sessie."""
@@ -98,29 +107,67 @@ class ZonnedimmerAPI:
         token = self._extract_csrf(html)
         if not token:
             raise ZonnedimmerError("CSRF-token niet gevonden op loginpagina")
+        _LOGGER.debug("Login CSRF-token gevonden")
 
         payload = {
             "_token": token,
             "email": self._username,
             "password": self._password,
-            "remember": "on",
         }
         try:
             async with self._session.post(
                 self._url(PATH_LOGIN),
                 data=payload,
+                headers=self._headers(PATH_LOGIN),
                 allow_redirects=True,
             ) as resp:
                 final_url = str(resp.url)
+                status = resp.status
+                # Lees de body altijd; bij redirect naar login staat er een foutmelding.
                 body = await resp.text()
         except Exception as err:
             raise ZonnedimmerError(f"Login-verzoek mislukt: {err}") from err
 
-        if self._on_login_page(final_url) or "deze combinatie" in body.lower():
-            raise ZonnedimmerAuthError(
-                "Inloggen mislukt - ongeldig e-mailadres of wachtwoord"
+        _LOGGER.warning(
+            "Zonnedimmer login: POST /login -> status=%s final_url=%s body_len=%d",
+            status, final_url, len(body),
+        )
+
+        # Laravel stuurt bij ongeldige credentials terug naar /login (302->200)
+        # en bij validatiefouten een 422 met JSON, of 419 bij CSRF-mismatch.
+        if status == HTTPStatus.UNPROCESSABLE_ENTITY:
+            raise ZonnedimmerError(
+                f"Login afgewezen door validatie (HTTP 422): {body[:300]}"
             )
-        _LOGGER.info("Succesvol ingelogd bij Zonnedimmer")
+        if status == HTTPStatus.TOO_MANY_REQUESTS:
+            raise ZonnedimmerError("Te veel login-pogingen - even wachten")
+        if status == HTTPStatus.FORBIDDEN or status == 419:
+            raise ZonnedimmerError(
+                f"Login geblokkeerd (HTTP {status}) - mogelijke CSRF/Cloudflare-blokkade: {body[:200]}"
+            )
+
+        # Verifieer succes definitief via de authenticated-meta-tag op de settingspagina.
+        settings = await self.async_fetch_settings()
+        if settings is None or not settings.get("authenticated"):
+            if self._on_login_page(final_url):
+                _LOGGER.warning(
+                    "Zonnedimmer login faalde: geredirect naar /login "
+                    "(waarschijnlijk ongeldige credentials)"
+                )
+                raise ZonnedimmerAuthError(
+                    "Inloggen mislukt - ongeldig e-mailadres of wachtwoord"
+                )
+            _LOGGER.warning(
+                "Zonnedimmer login niet bevestigd via settings-pagina "
+                "(POST status=%s, url=%s, authenticated=%s)",
+                status, final_url,
+                settings.get("authenticated") if settings else None,
+            )
+            raise ZonnedimmerAuthError(
+                "Inloggen leek te slagen maar sessie niet bevestigd"
+            )
+
+        _LOGGER.warning("Zonnedimmer login succesvol voor %s", self._username)
         return True
 
     async def async_fetch_settings(self) -> dict[str, Any] | None:
@@ -130,12 +177,20 @@ class ZonnedimmerAPI:
         """
         try:
             async with self._session.get(
-                self._url(PATH_SETTINGS), allow_redirects=True
+                self._url(PATH_SETTINGS),
+                headers=self._headers(PATH_SETTINGS),
+                allow_redirects=True,
             ) as resp:
                 html = await resp.text()
                 final_url = str(resp.url)
+                status = resp.status
         except Exception as err:
             raise ZonnedimmerError(f"Kon instellingenpagina niet ophalen: {err}") from err
+
+        _LOGGER.warning(
+            "Zonnedimmer: GET /dashboard/settings -> status=%s url=%s authenticated=%s",
+            status, final_url, self._extract_authenticated(html),
+        )
 
         if self._on_login_page(final_url):
             return None
@@ -187,12 +242,15 @@ class ZonnedimmerAPI:
             async with self._session.post(
                 self._url(PATH_MANUAL_POWER),
                 data=payload,
+                headers=self._headers(PATH_SETTINGS),
                 allow_redirects=True,
             ) as resp:
                 final_url = str(resp.url)
                 status = resp.status
         except Exception as err:
             raise ZonnedimmerError(f"Dim-verzoek mislukt: {err}") from err
+
+        _LOGGER.debug("Turn-off POST -> status=%s url=%s", status, final_url)
 
         if self._on_login_page(final_url):
             raise ZonnedimmerAuthError("Sessie verlopen tijdens dimmen")
