@@ -1,11 +1,11 @@
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.19
 FROM $BUILD_FROM
 
 # Basis packages voor Chromium en Node.js
+# (npx is geen apart apk-pakket in Alpine 3.19; het wordt meegeleverd met npm)
 RUN apk add --no-cache \
     nodejs \
     npm \
-    npx \
     chromium \
     nss \
     freetype \

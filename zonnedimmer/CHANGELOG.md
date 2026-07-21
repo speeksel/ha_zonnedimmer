@@ -16,6 +16,11 @@
 - `POST /turn-off-for-two-hours` is een backward-compatible alias voor `duration=2`.
 - `rest_command`, script- en automatiseringsvoorbeelden in `DOCS.md` gebruiken het nieuwe parameterized endpoint.
 
+### Opgelost
+
+- Dockerfile: `npx` verwijderd (geen apart apk-pakket in Alpine 3.19; meegeleverd met `npm`) — lost bouwfout op.
+- Dockerfile: standaardwaarde voor `BUILD_FROM` toegevoegd om `InvalidDefaultArgInFrom`-waarschuwing op te lossen.
+
 ## 1.0.0 (2026-07-14)
 
 ### Toegevoegd
