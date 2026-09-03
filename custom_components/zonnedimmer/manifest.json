@@ -1,0 +1,10 @@
+{
+  "domain": "zonnedimmer",
+  "name": "Zonnedimmer",
+  "codeowners": ["@brianlesker"],
+  "config_flow": true,
+  "documentation": "https://github.com/speeksel/ha_zonnedimmer",
+  "issue_tracker": "https://github.com/speeksel/ha_zonnedimmer/issues",
+  "iot_class": "cloud_polling",
+  "version": "1.0.0"
+}

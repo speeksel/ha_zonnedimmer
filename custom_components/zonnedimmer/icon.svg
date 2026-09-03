@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <!-- Achtergrond: koel techy gradient -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b2838"/>
+      <stop offset="1" stop-color="#2a4365"/>
+    </linearGradient>
+
+    <!-- Zon: warme gloei -->
+    <radialGradient id="sun" cx="0.5" cy="0.45" r="0.6">
+      <stop offset="0" stop-color="#fff59d"/>
+      <stop offset="0.45" stop-color="#ffd54f"/>
+      <stop offset="1" stop-color="#ff8f00"/>
+    </radialGradient>
+
+    <!-- GLOED achter de zon -->
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffb300" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffb300" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Dim-overlay over de onderste helft van de zon -->
+    <linearGradient id="dim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1220" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0b1220" stop-opacity="0.78"/>
+    </linearGradient>
+
+    <!-- Slider track -->
+    <linearGradient id="track" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.25"/>
+    </linearGradient>
+
+    <!-- Soft shadow -->
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Sun glow -->
+  <circle cx="256" cy="232" r="180" fill="url(#glow)"/>
+
+  <!-- Sun rays -->
+  <g stroke="#ffce54" stroke-width="11" stroke-linecap="round" opacity="0.95">
+    <line x1="256" y1="42"  x2="256" y2="86"/>
+    <line x1="256" y1="378" x2="256" y2="422"/>
+    <line x1="66"  y1="232" x2="110" y2="232"/>
+    <line x1="402" y1="232" x2="446" y2="232"/>
+    <line x1="122" y1="98"  x2="153" y2="129"/>
+    <line x1="359" y1="335" x2="390" y2="366"/>
+    <line x1="390" y1="98"  x2="359" y2="129"/>
+    <line x1="153" y1="335" x2="122" y2="366"/>
+  </g>
+
+  <!-- Sun body -->
+  <circle cx="256" cy="232" r="120" fill="url(#sun)"/>
+
+  <!-- Dim overlay (lower portion of sun darkened) -->
+  <path d="M136,232 a120,120 0 0 0 240,0 v120 h-240 z" fill="url(#dim)"/>
+
+  <!-- Dimmer slider (diagonal across sun) -->
+  <g transform="rotate(-28 256 232)">
+    <rect x="96"  y="300" width="320" height="22" rx="11" fill="url(#track)"/>
+    <!-- inactive ticks -->
+    <circle cx="170" cy="311" r="5" fill="#ffffff" opacity="0.35"/>
+    <circle cx="232" cy="311" r="5" fill="#ffffff" opacity="0.35"/>
+    <circle cx="294" cy="311" r="5" fill="#ffffff" opacity="0.35"/>
+    <!-- knob pulled toward "dim" (left/low) end -->
+    <circle cx="150" cy="311" r="22" fill="#ffffff"/>
+    <circle cx="150" cy="311" r="9"  fill="#1b2838"/>
+  </g>
+
+  <!-- Downward "dim" arrow -->
+  <g transform="translate(372 104)" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9" filter="url(#soft)">
+    <line x1="0" y1="-26" x2="0" y2="34"/>
+    <polyline points="-20,14 0,34 20,14"/>
+  </g>
+  <g transform="translate(372 104)" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95">
+    <line x1="0" y1="-26" x2="0" y2="34"/>
+    <polyline points="-20,14 0,34 20,14"/>
+  </g>
+</svg>
